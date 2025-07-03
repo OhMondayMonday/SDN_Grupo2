@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Autorizado - Bienvenido</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+        
+        .success-icon {
+            font-size: 4rem;
+            color: #22c55e;
+            margin-bottom: 1rem;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        
+        .user-info {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            text-align: left;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding: 0.25rem 0;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .info-value {
+            color: #6b7280;
+        }
+        
+        .role-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .role-admin {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .role-user {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .role-guest {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        
+        .role-iot {
+            background: #ecfdf5;
+            color: #065f46;
+        }
+        
+        .buttons {
+            margin-top: 2rem;
+            gap: 1rem;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        
+        .countdown {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">✅</div>
+        <h1>¡Acceso Autorizado!</h1>
+        <p>Te has conectado exitosamente a la red</p>
+        
+        <div class="user-info">
+            <div class="info-row">
+                <span class="info-label">Usuario:</span>
+                <span class="info-value">{{ username }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Rol:</span>
+                <span class="role-badge role-{{ role.lower().replace('role_', '') }}">
+                    {% if role == 'ROLE_ADMIN' %}
+                        👑 Administrador
+                    {% elif role == 'ROLE_USER' %}
+                        👤 Usuario
+                    {% elif role == 'ROLE_IOT' %}
+                        🤖 Dispositivo IoT
+                    {% else %}
+                        🏠 Invitado
+                    {% endif %}
+                </span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">VLAN:</span>
+                <span class="info-value">{{ vlan_id }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Duración de sesión:</span>
+                <span class="info-value">{{ "%.0f"|format(session_timeout/3600) }} horas</span>
+            </div>
+        </div>
+        
+        <div class="buttons">
+            <a href="http://www.google.com" class="btn btn-primary">🌐 Navegar Internet</a>
+            <a href="/status" class="btn btn-secondary">📊 Ver Estado</a>
+            <a href="/logout" class="btn btn-secondary">🚪 Cerrar Sesión</a>
+        </div>
+        
+        <div class="countdown">
+            <p>Tu sesión expirará automáticamente</p>
+        </div>
+    </div>
+    
+    <script>
+        // Auto-redirect después de 5 segundos
+        setTimeout(() => {
+            window.location.href = 'http://www.google.com';
+        }, 5000);
+        
+        // Countdown
+        let timeLeft = 5;
+        const countdownElement = document.querySelector('.countdown p');
+        
+        const countdown = setInterval(() => {
+            timeLeft--;
+            countdownElement.textContent = `Redirigiendo en ${timeLeft} segundos...`;
+            
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                window.location.href = 'http://www.google.com';
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

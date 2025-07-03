@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Conectado - Portal Cautivo SDN{% endblock %}
+{% block content %}
+    <div class="user-info">
+        <h3>🎉 ¡Conexión Exitosa!</h3>
+        <p>Bienvenido <strong>{{ username }}</strong></p>
+    </div>
+    
+    <div class="network-status">
+        🟢 Red configurada y acceso autorizado
+    </div>
+    
+    <div class="info-box">
+        <h4>📊 Detalles de tu Sesión:</h4>
+        <p><strong>👤 Usuario:</strong> {{ username }}</p>
+        <p><strong>🏷️ Rol asignado:</strong> {{ role }}</p>
+        <p><strong>🌐 VLAN de red:</strong> {{ vlan_id }}</p>
+        <p><strong>📍 Tu IP:</strong> {{ client_ip }}</p>
+        <p><strong>🖥️ Dirección MAC:</strong> {{ mac_address }}</p>
+        <p><strong>⏱️ Duración de sesión:</strong> {{ session_timeout }} segundos</p>
+    </div>
+    
+    <div class="info-box">
+        <h4>✅ Estado de Red SDN:</h4>
+        <div class="network-status">🔗 Conectado al controlador SDN</div>
+        <div class="network-status">⚡ Flujos de red instalados</div>
+        <div class="network-status">🛡️ Políticas de seguridad aplicadas</div>
+        <div class="network-status">🌍 Acceso a Internet habilitado</div>
+    </div>
+    
+    <div class="info-box">
+        <h4>🚦 Permisos de Acceso Según tu Rol:</h4>
+        
+        {% if role == 'ROLE_ADMIN' %}
+            <div class="network-status">🔓 Acceso completo a todas las redes</div>
+            <div class="network-status">⚙️ Herramientas de administración</div>
+            <div class="network-status">🔧 SSH y protocolos de gestión</div>
+        {% elif role == 'ROLE_PROFESOR' %}
+            <div class="network-status">🌐 Acceso web completo (HTTP/HTTPS)</div>
+            <div class="network-status">🔗 SSH para servidores autorizados</div>
+            <div class="network-status">🏢 Acceso a redes internas</div>
+        {% elif role == 'ROLE_ESTUDIANTE' %}
+            <div class="network-status">🌐 Acceso web (HTTP/HTTPS)</div>
+            <div class="network-status">🔍 DNS para resolución de nombres</div>
+            <div style="color: #dc3545;">❌ Sin acceso a redes internas</div>
+        {% elif role == 'ROLE_GUEST' %}
+            <div class="network-status">🌐 Acceso web básico</div>
+            <div style="color: #dc3545;">❌ Sin acceso a redes privadas</div>
+            <div style="color: #dc3545;">❌ Protocolos limitados</div>
+        {% elif role == 'ROLE_IOT' %}
+            <div class="network-status">🏠 Comunicación con servidor IoT</div>
+            <div style="color: #dc3545;">❌ Sin acceso a Internet</div>
+            <div style="color: #dc3545;">❌ Tráfico altamente restringido</div>
+        {% elif role == 'ROLE_SOPORTE' %}
+            <div class="network-status">🔓 Acceso técnico completo</div>
+            <div class="network-status">🛠️ Herramientas de diagnóstico</div>
+            <div class="network-status">📡 ICMP y protocolos de red</div>
+        {% endif %}
+    </div>
+    
+    <div class="session-timer">
+        ⏰ Tu sesión se cerrará automáticamente después de {{ session_timeout }} segundos de inactividad
+    </div>
+    
+    <p style="margin: 20px 0; color: #28a745; font-weight: 500;">
+        🌍 Ahora puedes navegar libremente según tus permisos de rol.<br>
+        Esta ventana se puede cerrar de forma segura.
+    </p>
+    
+    <a href="/logout" class="btn logout-btn">🔐 Cerrar Sesión</a>
+    
+    <div class="info-box" style="margin-top: 20px; background: #e7f3ff;">
+        <h4>💡 Información Técnica:</h4>
+        <p><strong>Tecnología:</strong> SDN (Software Defined Networking)</p>
+        <p><strong>Autenticación:</strong> RADIUS con base de datos MySQL</p>
+        <p><strong>Controlador:</strong> Floodlight con políticas dinámicas</p>
+        <p><strong>Seguridad:</strong> Flujos SDN basados en roles</p>
+    </div>
+{% endblock %}

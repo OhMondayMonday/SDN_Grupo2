@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Sesión Cerrada - Portal Cautivo SDN{% endblock %}
+{% block content %}
+    <div class="header">
+        <h1>👋 Sesión Cerrada</h1>
+        <h3>Desconectado de la Red SDN</h3>
+    </div>
+    
+    <div class="alert alert-info">
+        <strong>✅ Logout exitoso:</strong> Tu sesión ha sido cerrada correctamente.
+    </div>
+    
+    <div class="info-box">
+        <h4>🔒 Estado de Desconexión:</h4>
+        <div style="color: #dc3545;">❌ Flujos SDN removidos de los switches</div>
+        <div style="color: #dc3545;">❌ Acceso a Internet bloqueado</div>
+        <div style="color: #dc3545;">❌ Políticas de red desactivadas</div>
+        <div style="color: #dc3545;">❌ Sesión RADIUS terminada</div>
+    </div>
+    
+    <div class="info-box">
+        <h4>🔄 Para Reconectar:</h4>
+        <p>Si necesitas acceso nuevamente, deberás autenticarte otra vez.</p>
+        <p>Todos los flujos de red han sido eliminados por seguridad.</p>
+    </div>
+    
+    <a href="/" class="btn">🔓 Iniciar Nueva Sesión</a>
+    
+    <div class="info-box" style="margin-top: 20px; background: #fff3cd;">
+        <h4>⚠️ Importante:</h4>
+        <p><strong>Seguridad:</strong> Al cerrar sesión, se eliminan automáticamente todos los flujos SDN asociados a tu usuario.</p>
+        <p><strong>Privacidad:</strong> No se almacena información personal después del logout.</p>
+        <p><strong>Red:</strong> El controlador SDN ha sido notificado de tu desconexión.</p>
+    </div>
+{% endblock %}

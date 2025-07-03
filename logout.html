@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sesión Cerrada - Portal Cautivo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .logout-icon {
+            font-size: 4rem;
+            color: #ef4444;
+            margin-bottom: 1rem;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        
+        .message {
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .info-box {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .info-box h3 {
+            color: #dc2626;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        .info-box ul {
+            text-align: left;
+            color: #991b1b;
+            font-size: 0.9rem;
+        }
+        
+        .info-box li {
+            margin-bottom: 0.25rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s;
+            margin: 0.5rem;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .footer {
+            margin-top: 2rem;
+            color: #666;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logout-icon">🚪</div>
+        <h1>Sesión Cerrada</h1>
+        <p class="message">
+            Tu sesión ha sido cerrada exitosamente.<br>
+            El acceso a internet ha sido bloqueado.
+        </p>
+        
+        <div class="info-box">
+            <h3>📋 Tu acceso de red ha sido revocado:</h3>
+            <ul>
+                <li>✅ Flujos OpenFlow removidos</li>
+                <li>✅ Sesión eliminada del servidor</li>
+                <li>✅ Acceso a internet bloqueado</li>
+                <li>✅ Credenciales de red limpiadas</li>
+            </ul>
+        </div>
+        
+        <div>
+            <a href="/" class="btn">🔐 Iniciar Sesión Nuevamente</a>
+        </div>
+        
+        <div class="footer">
+            <p>Para volver a conectarte, debes autenticarte nuevamente</p>
+            <p><strong>Portal Cautivo SDN v1.0</strong></p>
+        </div>
+    </div>
+    
+    <script>
+        // Limpiar caché del navegador
+        if ('caches' in window) {
+            caches.keys().then(names => {
+                names.forEach(name => {
+                    caches.delete(name);
+                });
+            });
+        }
+        
+        // Limpiar localStorage
+        localStorage.clear();
+        sessionStorage.clear();
+    </script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Acceso - Portal Cautivo SDN{% endblock %}
+{% block content %}
+    <div class="header">
+        <h1>🌐 Portal Cautivo SDN</h1>
+        <h3>Autenticación de Red Requerida</h3>
+    </div>
+    
+    {% if error %}
+        <div class="alert alert-error">
+            <strong>Error:</strong> {{ error }}
+        </div>
+    {% endif %}
+    
+    <form method="POST" action="/authenticate">
+        <div class="form-group">
+            <label for="username">👤 Usuario:</label>
+            <input type="text" id="username" name="username" required 
+                   placeholder="Ingrese su nombre de usuario" autofocus>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">🔒 Contraseña:</label>
+            <input type="password" id="password" name="password" required 
+                   placeholder="Ingrese su contraseña">
+        </div>
+        
+        <input type="hidden" name="client_mac" value="unknown">
+        
+        <button type="submit" class="btn">🚀 Conectar a la Red</button>
+    </form>
+    
+    <div class="info-box">
+        <h4>📋 Usuarios de Prueba Disponibles:</h4>
+        <p><strong>👨‍💼 Administrador:</strong> admin / admin123 (Acceso completo)</p>
+        <p><strong>👨‍🏫 Profesor:</strong> profesor1 / prof123 (Acceso extendido)</p>
+        <p><strong>👨‍🎓 Estudiante:</strong> estudiante1 / est123 (Acceso web)</p>
+        <p><strong>👥 Invitado:</strong> invitado1 / inv123 (Acceso limitado)</p>
+        <p><strong>🔧 Soporte:</strong> soporte1 / sop123 (Acceso técnico)</p>
+        <p><strong>🏠 IoT:</strong> iot1 / iot123 (Dispositivo IoT)</p>
+    </div>
+    
+    <div class="info-box">
+        <h4>ℹ️ Información del Sistema:</h4>
+        <p><strong>IP del Cliente:</strong> {{ client_ip }}</p>
+        <p><strong>Estado de Red:</strong> <span style="color: #dc3545;">🔴 Sin autenticar</span></p>
+        <p><strong>Acceso a Internet:</strong> <span style="color: #dc3545;">❌ Bloqueado</span></p>
+    </div>
+    
+    <div class="info-box">
+        <h4>🔐 Políticas de Acceso por Rol:</h4>
+        <p><strong>Admin/Soporte:</strong> Acceso completo a todas las redes</p>
+        <p><strong>Profesor:</strong> Web + SSH + Redes internas</p>
+        <p><strong>Estudiante:</strong> Solo acceso web (HTTP/HTTPS)</p>
+        <p><strong>Invitado:</strong> Web básico, sin redes privadas</p>
+        <p><strong>IoT:</strong> Solo comunicación con servidor específico</p>
+    </div>
+{% endblock %}

@@ -118,10 +118,8 @@ class SDNController:
             'ROLE_ESTUDIANTE': {
                 'priority': 600,
                 'flows': [
-                    {'name': 'estudiante_web_http', 'match': 'tp-dst=80', 'action': 'output=normal'},
-                    {'name': 'estudiante_web_https', 'match': 'tp-dst=443', 'action': 'output=normal'},
-                    {'name': 'estudiante_dns', 'match': 'tp-dst=53', 'action': 'output=normal'},
-                    {'name': 'estudiante_block_internal', 'match': 'nw-dst=192.168.1.0/24', 'action': 'drop', 'priority': 700}
+                    # Permitir acceso a 10.0.0.1:8080 (TCP)
+                    {'name': 'estudiante_portal_8080', 'match': 'nw-dst=10.0.0.1,tp-dst=8080', 'action': 'output=normal'}
                 ]
             },
             'ROLE_GUEST': {
@@ -155,7 +153,7 @@ class SDNController:
     def test_floodlight_connection(self):
         """Verificar conectividad con Floodlight"""
         try:
-            response = requests.get(f"{self.FLOODLIGHT_URL}/wm/core/controller/switches/json", timeout=5)
+            response = requests.get(f"{self.FLOODLIGHT_URL}/wm/core/controller/switches/json", timeout=10)
             if response.status_code == 200:
                 switches = response.json()
                 logger.info(f"Connected to Floodlight. Found {len(switches)} switches")
@@ -167,6 +165,7 @@ class SDNController:
             logger.error(f"Cannot connect to Floodlight: {e}")
             return False
     
+    # ...existing code...
     def generate_flows_for_user(self, user_data):
         """Generar flujos SDN específicos para un usuario según su rol"""
         role = user_data['role']
@@ -187,49 +186,65 @@ class SDNController:
                 flow = {
                     "switch": switch_dpid,
                     "name": f"{flow_template['name']}_{mac_address.replace(':', '')}",
-                    "priority": flow_template.get('priority', policy['priority']),
-                    "src-mac": mac_address,
-                    "actions": flow_template['action']
+                    "priority": str(flow_template.get('priority', policy['priority'])),
+                    "eth_src": mac_address,
+                    "eth_type": "0x0800",  # IPv4
+                    "active": "true"
                 }
                 
-                # Agregar criterios de match si existen
+                # Agregar criterios de match si existen (soportar múltiples condiciones)
                 if 'match' in flow_template and flow_template['match']:
-                    match_parts = flow_template['match'].split('=')
-                    if len(match_parts) == 2:
-                        key, value = match_parts
-                        flow[key] = value
+                    match_items = flow_template['match'].split(',')
+                    for item in match_items:
+                        item = item.strip()
+                        if '=' in item:
+                            key, value = item.split('=', 1)
+                            key = key.strip()
+                            value = value.strip()
+                            # Mapear campos a formato Floodlight
+                            if key == "tp-dst":
+                                flow["ip_proto"] = "6"  # TCP
+                                flow["tp_dst"] = value
+                            elif key == "tp-src":
+                                flow["ip_proto"] = "6"  # TCP
+                                flow["tp_src"] = value
+                            elif key == "nw-dst":
+                                flow["ipv4_dst"] = value
+                            elif key == "nw-src":
+                                flow["ipv4_src"] = value
+                            elif key == "ip-proto":
+                                flow["ip_proto"] = value
+                
+                # Configurar acción
+                action = flow_template['action']
+                if action == "output=normal":
+                    flow["actions"] = "output=normal"
+                elif action == "drop":
+                    flow["actions"] = ""  # Sin acción = drop
+                else:
+                    flow["actions"] = action
                 
                 # Agregar VLAN si corresponde
                 if vlan_id and vlan_id != '0':
-                    flow["vlan-id"] = vlan_id
+                    flow["vlan_vid"] = str(vlan_id)
                 
                 flows.append(flow)
         
         return flows
     
     def install_flows_to_floodlight(self, flows):
-        """Instalar flujos en Floodlight"""
-        results = []
-        
+        """Instalar flujos en Floodlight usando la API REST"""
+        FLOODLIGHT_URL = "http://192.168.200.200:8080/wm/staticflowpusher/json"
         for flow in flows:
-            try:
-                # URL para instalar flujo estático en Floodlight
-                url = f"{self.FLOODLIGHT_URL}/wm/staticflowpusher/json"
-                
-                response = requests.post(url, json=flow, timeout=5)
-                
-                if response.status_code == 200:
-                    logger.info(f"✅ Flujo instalado en switch {flow['switch']}: {flow['name']}")
-                    results.append({"switch": flow['switch'], "status": "success"})
-                else:
-                    logger.error(f"❌ Error instalando flujo: {response.text}")
-                    results.append({"switch": flow['switch'], "status": "error", "error": response.text})
-                    
-            except Exception as e:
-                logger.error(f"❌ Excepción instalando flujo: {str(e)}")
-                results.append({"switch": flow['switch'], "status": "exception", "error": str(e)})
-        
-        return results
+            response = requests.post(
+                FLOODLIGHT_URL,
+                headers={"Content-Type": "application/json"},
+                data=json.dumps(flow)
+            )
+            if response.status_code == 200:
+                print(f"✅ Flujo instalado: {flow['name']}")
+            else:
+                print(f"❌ Error instalando {flow['name']}: {response.text}")
     
     def remove_flows_from_floodlight(self, flow_names):
         """Remover flujos específicos de Floodlight"""
@@ -245,8 +260,10 @@ class SDNController:
                     "name": flow_name,
                     "switch": "all"  # O especificar switch específico
                 }
+
+
                 
-                response = requests.delete(url, json=payload, timeout=5)
+                response = requests.delete(url, json=payload, timeout=10)
                 
                 if response.status_code == 200:
                     removed_count += 1
@@ -425,10 +442,10 @@ class SDNController:
             allow_portal = {
                 "switch": switch_dpid,
                 "name": "allow_captive_portal",
-                "priority": "2000",  # Prioridad alta
+                "priority": "2000",
                 "eth_type": "0x0800",
                 "ipv4_dst": "10.0.0.1",
-                "ip_proto": "6",  # TCP
+                "ip_proto": "6",
                 "tp_dst": "5000",
                 "active": "true",
                 "actions": "output=normal"
@@ -440,81 +457,70 @@ class SDNController:
                 "name": "allow_dns",
                 "priority": "1900",
                 "eth_type": "0x0800",
-                "ip_proto": "17",  # UDP
+                "ip_proto": "17",
                 "tp_dst": "53",
                 "active": "true", 
                 "actions": "output=normal"
             }
             
-            # 3. ✅ PERMITIR DHCP (para obtener IP)
+            # 3. ✅ PERMITIR DHCP cliente
             allow_dhcp_client = {
                 "switch": switch_dpid,
                 "name": "allow_dhcp_client",
                 "priority": "1900",
                 "eth_type": "0x0800",
-                "ip_proto": "17",  # UDP
+                "ip_proto": "17",
                 "tp_src": "68",
                 "tp_dst": "67",
                 "active": "true",
                 "actions": "output=normal"
             }
             
+            # 4. ✅ PERMITIR DHCP servidor
             allow_dhcp_server = {
                 "switch": switch_dpid,
                 "name": "allow_dhcp_server",
                 "priority": "1900",
                 "eth_type": "0x0800",
-                "ip_proto": "17",  # UDP
+                "ip_proto": "17",
                 "tp_src": "67",
                 "tp_dst": "68",
                 "active": "true",
                 "actions": "output=normal"
             }
             
-            # 4. 🔄 REDIRIGIR tráfico HTTP/HTTPS al portal cautivo
+            # 5. 🔄 REDIRIGIR tráfico HTTP al portal cautivo
             redirect_http = {
                 "switch": switch_dpid,
                 "name": "redirect_http_to_portal",
                 "priority": "1000",
                 "eth_type": "0x0800",
-                "ip_proto": "6",  # TCP
+                "ip_proto": "6",
                 "tp_dst": "80",
                 "active": "true",
-                "actions": f"set_nw_dst=10.0.0.1,set_tp_dst=5000,output=normal"
+                "actions": "output=normal"
             }
             
+            # 6. 🔄 REDIRIGIR tráfico HTTPS al portal
             redirect_https = {
                 "switch": switch_dpid,
                 "name": "redirect_https_to_portal", 
                 "priority": "1000",
                 "eth_type": "0x0800",
-                "ip_proto": "6",  # TCP
+                "ip_proto": "6",
                 "tp_dst": "443",
                 "active": "true",
-                "actions": f"set_nw_dst=10.0.0.1,set_tp_dst=5000,output=normal"
+                "actions": "output=normal"
             }
             
-            # 5. 🔄 REDIRIGIR acceso a 10.0.0.1:8080 al portal
-            redirect_8080 = {
-                "switch": switch_dpid,
-                "name": "redirect_8080_to_portal",
-                "priority": "1500",  # Prioridad alta para capturar antes
-                "eth_type": "0x0800",
-                "ipv4_dst": "10.0.0.1",
-                "ip_proto": "6",  # TCP
-                "tp_dst": "8080",
-                "active": "true",
-                "actions": "set_tp_dst=5000,output=normal"
-            }
-            
-            # 6. ❌ BLOQUEAR todo lo demás
+            # 7. ❌ BLOQUEAR todo lo demás
             block_all = {
                 "switch": switch_dpid,
                 "name": "block_unauthorized",
-                "priority": "100",  # Prioridad baja
+                "priority": "100",
                 "eth_type": "0x0800",
                 "active": "true",
-                "actions": ""  # Drop (sin action = drop)
+                "actions": ""
             }
             
             default_flows.extend([
@@ -523,8 +529,7 @@ class SDNController:
                 allow_dhcp_client, 
                 allow_dhcp_server,
                 redirect_http,
-                redirect_https, 
-                redirect_8080,
+                redirect_https,
                 block_all
             ])
         
@@ -543,8 +548,9 @@ class SDNController:
             allow_user = {
                 "switch": switch_dpid,
                 "name": f"allow_authenticated_{mac_address.replace(':', '')}",
-                "priority": "3000",  # Prioridad MUY alta
+                "priority": "3000",
                 "eth_src": mac_address,
+                "eth_type": "0x0800",
                 "active": "true",
                 "actions": "output=normal"
             }
